@@ -38,12 +38,24 @@ export default function App() {
     const {contacts, q} = useLoaderData<typeof loader>();
     const navigation = useNavigation();
     const submit = useSubmit();
+    const searching =
+        navigation.location &&
+        new URLSearchParams(navigation.location.search).has(
+            "q"
+        );
 
     const [query, setQuery] = useState(q || "");
 
     useEffect(() => {
         setQuery(q || "");
     }, [q]);
+
+    const onChangeForm = (event) => {
+        const isFirstSearch = q === null;
+        submit(event.currentTarget, {
+            replace: !isFirstSearch,
+        });
+    }
 
     return (
         <html lang="en">
@@ -57,10 +69,12 @@ export default function App() {
         <div id="sidebar">
             <h1>Remix Contacts</h1>
             <div>
-                <Form id="search-form" role="search" onChange={(event) => submit(event.currentTarget)}>
+                <Form id="search-form" role="search" onChange={onChangeForm}>
                     <input id="q" value={query} aria-label="Search contacts" placeholder="Search" type="search"
-                           name="q" onChange={(event) => setQuery(event.currentTarget.value)}/>
-                    <div id="search-spinner" aria-hidden hidden={true}/>
+                           name="q" onChange={(event) => setQuery(event.currentTarget.value)}
+                           className={searching ? "loading" : ""}
+                    />
+                    <div id="search-spinner" aria-hidden hidden={!searching}/>
                 </Form>
                 <Form method="post">
                     <button type="submit">New</button>
@@ -102,7 +116,7 @@ export default function App() {
                 )}
             </nav>
         </div>
-        <div className={navigation.state === "loading" ? "loading" : ""} id="detail">
+        <div className={navigation.state === "loading" && !searching ? "loading" : ""} id="detail">
             <Outlet/>
         </div>
         <ScrollRestoration/>
