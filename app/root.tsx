@@ -14,6 +14,7 @@ import {json, redirect} from "@remix-run/node";
 import appStylesHref from "./app.css?url";
 
 import {createEmptyContact, getContacts} from "./data";
+import {useEffect, useState} from "react";
 
 export const links: LinksFunction = () => [
     {rel: "stylesheet", href: appStylesHref},
@@ -25,7 +26,7 @@ export const loader = async ({
     const url = new URL(request.url);
     const q = url.searchParams.get("q");
     const contacts = await getContacts(q);
-    return json({ contacts });
+    return json({q, contacts});
 };
 export const action = async () => {
     const contact = await createEmptyContact();
@@ -33,8 +34,13 @@ export const action = async () => {
 }
 
 export default function App() {
-    const {contacts} = useLoaderData<typeof loader>();
+    const {contacts, q} = useLoaderData<typeof loader>();
     const navigation = useNavigation();
+    const [query, setQuery] = useState(q || "");
+
+    useEffect(() => {
+        setQuery(q || "");
+    }, [q]);
 
     return (
         <html lang="en">
@@ -49,13 +55,8 @@ export default function App() {
             <h1>Remix Contacts</h1>
             <div>
                 <Form id="search-form" role="search">
-                    <input
-                        id="q"
-                        aria-label="Search contacts"
-                        placeholder="Search"
-                        type="search"
-                        name="q"
-                    />
+                    <input id="q" value={query} aria-label="Search contacts" placeholder="Search" type="search"
+                           name="q" onChange={(event) => setQuery(event.currentTarget.value)}/>
                     <div id="search-spinner" aria-hidden hidden={true}/>
                 </Form>
                 <Form method="post">
